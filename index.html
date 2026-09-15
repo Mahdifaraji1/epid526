@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Participatory Symptom Surveillance — classroom simulation</title>
+<style>
+:root{
+  --paper:#F1F4F5; --card:#FFFFFF; --ink:#0E1519; --ink2:#41525C; --ink3:#71838D;
+  --band:#123642; --rule:#D6DEE2;
+  --elev:#9E5407; --mod:#4A6822; --base:#1F6060;
+  --sim:#6B2478;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased}
+body{min-height:100dvh;display:flex;flex-direction:column}
+
+#sim{
+  position:sticky;top:0;z-index:20;
+  background:repeating-linear-gradient(135deg,var(--sim) 0 11px,#571E62 11px 22px);
+  color:#fff;padding:9px 16px;font-size:12px;line-height:1.35;
+  letter-spacing:.015em;font-weight:600;text-align:center;
+  padding-top:calc(9px + env(safe-area-inset-top));
+}
+#sim span{font-weight:400;opacity:.92}
+
+header{background:var(--band);color:#EAF1F3;padding:20px 20px 18px}
+header .t{font-size:17px;font-weight:600;letter-spacing:-.01em;line-height:1.25}
+header .s{font-size:12.5px;opacity:.72;margin-top:5px;line-height:1.45}
+
+main{flex:1;width:100%;max-width:580px;margin:0 auto;padding:20px 16px 40px}
+
+.card{background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:20px 18px;margin-bottom:14px}
+
+#entry label{display:block;font-size:14px;color:var(--ink2);margin-bottom:12px;line-height:1.5}
+#zip{width:100%;font-size:34px;font-weight:600;letter-spacing:.16em;text-align:center;
+  padding:16px 10px;border:1.5px solid var(--rule);border-radius:4px;background:#fff;color:var(--ink);
+  font-variant-numeric:tabular-nums;font-family:var(--sans)}
+#zip:focus{outline:none;border-color:var(--band)}
+#go{width:100%;margin-top:12px;padding:16px;font-size:16px;font-weight:600;color:#fff;
+  background:var(--band);border:none;border-radius:4px;cursor:pointer;font-family:var(--sans)}
+#go:active{opacity:.85}
+#err{color:#8C2418;font-size:13.5px;margin-top:10px;min-height:18px}
+
+#out{display:none}
+.zipline{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding-bottom:12px;border-bottom:1px solid var(--rule);margin-bottom:14px}
+.zipline .z{font-size:30px;font-weight:600;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.zipline .a{font-size:13.5px;color:var(--ink3);text-align:right}
+.chip{display:inline-block;padding:5px 11px;border-radius:3px;font-size:12px;font-weight:700;
+  letter-spacing:.05em;color:#fff;margin-bottom:12px}
+.msg{font-size:16.5px;line-height:1.58}
+.msg b{font-weight:600}
+
+table{width:100%;border-collapse:collapse;margin-top:6px}
+td{padding:11px 0;border-bottom:1px solid var(--rule);font-size:14px;vertical-align:top}
+td.k{color:var(--ink2);padding-right:14px}
+td.v{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+tr.flag td{color:#8C2418}
+.cardh{font-size:12px;font-weight:700;letter-spacing:.07em;color:var(--ink3);margin-bottom:4px}
+
+.notice{background:#F6EDF8;border:1px solid #D9BCE0;border-left:5px solid var(--sim);
+  border-radius:4px;padding:17px 18px;font-size:17.5px;line-height:1.48;color:#4A1B54;margin-bottom:14px}
+.notice strong{font-weight:700;display:block;color:#3B1244}
+
+#again{width:100%;margin-top:4px;padding:14px;font-size:15px;color:var(--band);background:none;
+  border:1.5px solid var(--band);border-radius:4px;cursor:pointer;font-weight:600;font-family:var(--sans)}
+
+footer{padding:18px 16px calc(24px + env(safe-area-inset-bottom));text-align:center;
+  font-size:11.5px;color:var(--ink3);line-height:1.6;max-width:580px;margin:0 auto}
+
+/* projector mode */
+#present{display:none;position:fixed;inset:0;z-index:40;background:#fff;
+  flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:4vh}
+#present.on{display:flex}
+#present h2{font-size:clamp(20px,2.6vw,34px);font-weight:600;color:var(--ink);text-align:center;letter-spacing:-.015em}
+#present p{font-size:clamp(13px,1.3vw,18px);color:var(--ink2);text-align:center;max-width:46ch;line-height:1.55}
+#pq{image-rendering:pixelated;width:min(52vh,420px);height:min(52vh,420px);border:14px solid #fff}
+#purl{font-size:13px;color:var(--ink3);word-break:break-all;text-align:center}
+#pbanner{position:fixed;top:0;left:0;right:0;
+  background:repeating-linear-gradient(135deg,var(--sim) 0 11px,#571E62 11px 22px);
+  color:#fff;padding:10px;text-align:center;font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+
+<div id="sim">SIMULATED DATA — NOT A PUBLIC HEALTH NOTICE<br><span>Classroom demonstration, EPID/GHI 526, University of Arizona</span></div>
+
+<header>
+  <div class="t">Participatory Symptom Surveillance</div>
+  <div class="s">A teaching model of the system design described in Wójcik et al., <em>Emerging Themes in Epidemiology</em>, 2014. Not affiliated with any health agency.</div>
+</header>
+
+<main>
+  <div class="card" id="entry">
+    <label for="zip">Enter a ZIP code to see what this kind of system would send back to you.</label>
+    <input id="zip" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5"
+           autocomplete="off" placeholder="85719" aria-label="ZIP code">
+    <button id="go">Show my area</button>
+    <div id="err" role="alert"></div>
+  </div>
+
+  <div id="out">
+    <div class="card">
+      <div class="zipline"><div class="z" id="oz"></div><div class="a" id="oa"></div></div>
+      <div class="chip" id="ochip"></div>
+      <div class="msg" id="omsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="cardh">THIS WEEK</div>
+      <table id="otab"></table>
+    </div>
+
+    <div class="notice">
+      <strong>Everything on this page was generated for teaching.</strong>
+      These are not real data and describe no real outbreak.
+    </div>
+
+    <button id="again">Check another ZIP code</button>
+  </div>
+</main>
+
+<footer>
+  Wójcik OP, Brownstein JS, Chunara R, Johansson MA. Public health for the people: participatory
+  infectious disease surveillance in the digital age. <em>Emerging Themes in Epidemiology</em> 2014; 11:7.<br>
+  If you have health concerns, contact a clinician or the Pima County Health Department.
+</footer>
+
+<div id="present">
+  <div id="pbanner">SIMULATED DATA — CLASSROOM DEMONSTRATION</div>
+  <h2>Scan to see what a participatory surveillance system sends back</h2>
+  <canvas id="pq" width="420" height="420"></canvas>
+  <p>Enter any ZIP code. The message you get is the fifth step of the loop: the aggregate returning to the participant.</p>
+  <div id="purl"></div>
+</div>
+
+<script>
+/* Minimal QR encoder: byte mode, versions 1-10, ECC level L or M. */
+var QR=(function(){
+"use strict";
+var EXP=new Array(512),LOG=new Array(256);
+(function(){var x=1;for(var i=0;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&0x100)x^=0x11D;}
+ for(var j=255;j<512;j++)EXP[j]=EXP[j-255];})();
+function gmul(a,b){return (a===0||b===0)?0:EXP[LOG[a]+LOG[b]];}
+function rsGen(n){var g=[1];for(var i=0;i<n;i++){var r=new Array(g.length+1);
+  for(var k=0;k<r.length;k++)r[k]=0;
+  for(var j=0;j<g.length;j++){r[j]^=g[j];r[j+1]^=gmul(g[j],EXP[i]);}g=r;}return g;}
+function rsEnc(data,n){var g=rsGen(n),buf=data.slice();
+  for(var i=0;i<n;i++)buf.push(0);
+  for(var i2=0;i2<data.length;i2++){var c=buf[i2];if(!c)continue;
+    for(var j=0;j<g.length;j++)buf[i2+j]^=gmul(g[j],c);}
+  return buf.slice(data.length);}
+
+var TOTALCW=[0,26,44,70,100,134,172,196,242,292,346];
+/* [ecPerBlock, g1blocks, g1dataCW, g2blocks, g2dataCW] */
+var ECC={
+ L:[null,[7,1,19,0,0],[10,1,34,0,0],[15,1,55,0,0],[20,1,80,0,0],[26,1,108,0,0],
+    [18,2,68,0,0],[20,2,78,0,0],[24,2,97,0,0],[30,2,116,0,0],[18,2,68,2,69]],
+ M:[null,[10,1,16,0,0],[16,1,28,0,0],[26,1,44,0,0],[18,2,32,0,0],[24,2,43,0,0],
+    [16,4,27,0,0],[18,4,31,0,0],[22,2,38,2,39],[22,3,36,2,37],[26,4,43,1,44]]
+};
+var ALIGN=[null,[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50]];
+var ECBITS={L:1,M:0};
+
+function fmtBits(ec,mask){var d=(ec<<3)|mask,v=d<<10;
+  for(var i=14;i>=10;i--)if(v&(1<<i))v^=0x537<<(i-10);
+  return ((d<<10)|v)^0x5412;}
+function verBits(ver){var v=ver<<12;
+  for(var i=17;i>=12;i--)if(v&(1<<i))v^=0x1F25<<(i-12);
+  return (ver<<12)|v;}
+
+function utf8(s){var out=[];for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);
+  if(c<0x80)out.push(c);
+  else if(c<0x800){out.push(0xC0|(c>>6),0x80|(c&63));}
+  else if(c<0xD800||c>=0xE000){out.push(0xE0|(c>>12),0x80|((c>>6)&63),0x80|(c&63));}
+  else{i++;var cc=0x10000+(((c&0x3FF)<<10)|(s.charCodeAt(i)&0x3FF));
+    out.push(0xF0|(cc>>18),0x80|((cc>>12)&63),0x80|((cc>>6)&63),0x80|(cc&63));}}
+  return out;}
+
+function dataCW(ver,lvl){var e=ECC[lvl][ver];return e[1]*e[2]+e[3]*e[4];}
+function capacityBytes(ver,lvl){
+  var bits=dataCW(ver,lvl)*8, hdr=4+(ver<10?8:16);
+  return Math.floor((bits-hdr)/8);
+}
+
+function encode(text,lvl){
+  lvl=lvl||"M";
+  var bytes=utf8(text),ver=0;
+  for(var v=1;v<=10;v++){ if(capacityBytes(v,lvl)>=bytes.length){ver=v;break;} }
+  if(!ver){ if(lvl==="M") return encode(text,"L"); throw new Error("too long for version 10"); }
+
+  /* bitstream */
+  var bits=[];
+  function put(val,len){for(var i=len-1;i>=0;i--)bits.push((val>>i)&1);}
+  put(4,4);
+  put(bytes.length, ver<10?8:16);
+  for(var i=0;i<bytes.length;i++)put(bytes[i],8);
+  var cap=dataCW(ver,lvl)*8;
+  for(var t=0;t<4&&bits.length<cap;t++)bits.push(0);
+  while(bits.length%8)bits.push(0);
+  var pad=[0xEC,0x11],pi=0;
+  while(bits.length<cap){put(pad[pi++%2],8);}
+  var cw=[];for(var b=0;b<bits.length;b+=8){var n=0;for(var k=0;k<8;k++)n=(n<<1)|bits[b+k];cw.push(n);}
+
+  /* blocks */
+  var e=ECC[lvl][ver],ecN=e[0],blocks=[],p=0;
+  for(var g=0;g<e[1];g++){blocks.push(cw.slice(p,p+e[2]));p+=e[2];}
+  for(var g2=0;g2<e[3];g2++){blocks.push(cw.slice(p,p+e[4]));p+=e[4];}
+  var ecblocks=blocks.map(function(b){return rsEnc(b,ecN);});
+  var maxD=Math.max.apply(null,blocks.map(function(b){return b.length;}));
+  var seqD=[];
+  for(var i2=0;i2<maxD;i2++)for(var j=0;j<blocks.length;j++)if(i2<blocks[j].length)seqD.push(blocks[j][i2]);
+  for(var i3=0;i3<ecN;i3++)for(var j2=0;j2<ecblocks.length;j2++)seqD.push(ecblocks[j2][i3]);
+
+  /* matrix */
+  var N=ver*4+17;
+  var m=[],res=[];
+  for(var r=0;r<N;r++){m.push(new Array(N).fill(0));res.push(new Array(N).fill(false));}
+  function setF(r,c,v){m[r][c]=v?1:0;res[r][c]=true;}
+  function finder(r0,c0){
+    for(var dr=-1;dr<=7;dr++)for(var dc=-1;dc<=7;dc++){
+      var r=r0+dr,c=c0+dc; if(r<0||c<0||r>=N||c>=N)continue;
+      var on=(dr>=0&&dr<=6&&(dc===0||dc===6))||(dc>=0&&dc<=6&&(dr===0||dr===6))||
+             (dr>=2&&dr<=4&&dc>=2&&dc<=4);
+      setF(r,c,on);
+    }
+  }
+  finder(0,0);finder(0,N-7);finder(N-7,0);
+  var al=ALIGN[ver];
+  for(var a=0;a<al.length;a++)for(var b2=0;b2<al.length;b2++){
+    var r0=al[a],c0=al[b2];
+    if((r0<=8&&c0<=8)||(r0<=8&&c0>=N-9)||(r0>=N-9&&c0<=8))continue;
+    for(var dr=-2;dr<=2;dr++)for(var dc=-2;dc<=2;dc++)
+      setF(r0+dr,c0+dc, Math.max(Math.abs(dr),Math.abs(dc))!==1);
+  }
+  for(var i4=8;i4<N-8;i4++){setF(6,i4,i4%2===0);setF(i4,6,i4%2===0);}
+  setF(N-8,8,true);
+  /* reserve format */
+  for(var i5=0;i5<9;i5++){ if(!res[8][i5])setF(8,i5,false); if(!res[i5][8])setF(i5,8,false); }
+  for(var i6=0;i6<8;i6++){ setF(8,N-1-i6,false); setF(N-1-i6,8,false); }
+  /* reserve version */
+  if(ver>=7){ for(var i7=0;i7<6;i7++)for(var j3=0;j3<3;j3++){ setF(i7,N-11+j3,false); setF(N-11+j3,i7,false); } }
+
+  /* place data */
+  var di=0,bitI=0,dir=-1,col=N-1;
+  function nextBit(){ if(di>=seqD.length)return 0;
+    var v=(seqD[di]>>(7-bitI))&1; bitI++; if(bitI===8){bitI=0;di++;} return v; }
+  while(col>0){
+    if(col===6)col--;
+    var row=(dir===-1)?N-1:0;
+    for(var k2=0;k2<N;k2++){
+      for(var s=0;s<2;s++){
+        var c2=col-s;
+        if(!res[row][c2]){ m[row][c2]=nextBit(); }
+      }
+      row+=dir;
+      if(row<0||row>=N)break;
+    }
+    dir=-dir; col-=2;
+  }
+
+  /* masks */
+  function maskFn(k,r,c){
+    switch(k){
+      case 0:return (r+c)%2===0;
+      case 1:return r%2===0;
+      case 2:return c%3===0;
+      case 3:return (r+c)%3===0;
+      case 4:return (Math.floor(r/2)+Math.floor(c/3))%2===0;
+      case 5:return ((r*c)%2)+((r*c)%3)===0;
+      case 6:return ((((r*c)%2)+((r*c)%3))%2)===0;
+      default:return ((((r+c)%2)+((r*c)%3))%2)===0;
+    }
+  }
+  function penalty(g){
+    var p=0,i,j,run,N2=g.length;
+    for(i=0;i<N2;i++){
+      run=1;for(j=1;j<N2;j++){ if(g[i][j]===g[i][j-1])run++; else {if(run>=5)p+=3+(run-5);run=1;} }
+      if(run>=5)p+=3+(run-5);
+      run=1;for(j=1;j<N2;j++){ if(g[j][i]===g[j-1][i])run++; else {if(run>=5)p+=3+(run-5);run=1;} }
+      if(run>=5)p+=3+(run-5);
+    }
+    for(i=0;i<N2-1;i++)for(j=0;j<N2-1;j++){
+      var s=g[i][j]+g[i][j+1]+g[i+1][j]+g[i+1][j+1];
+      if(s===0||s===4)p+=3;
+    }
+    var pat1=[1,0,1,1,1,0,1,0,0,0,0],pat2=[0,0,0,0,1,0,1,1,1,0,1];
+    function match(arr,off,pat){for(var q=0;q<11;q++)if(arr[off+q]!==pat[q])return false;return true;}
+    for(i=0;i<N2;i++){
+      var rowA=g[i],colA=[];for(j=0;j<N2;j++)colA.push(g[j][i]);
+      for(j=0;j+11<=N2;j++){
+        if(match(rowA,j,pat1)||match(rowA,j,pat2))p+=40;
+        if(match(colA,j,pat1)||match(colA,j,pat2))p+=40;
+      }
+    }
+    var dark=0;for(i=0;i<N2;i++)for(j=0;j<N2;j++)dark+=g[i][j];
+    var pct=dark*100/(N2*N2);
+    p+=Math.floor(Math.abs(pct-50)/5)*10;
+    return p;
+  }
+
+  var best=null,bestP=Infinity,bestMask=0;
+  for(var k3=0;k3<8;k3++){
+    var g3=[];
+    for(var r3=0;r3<N;r3++){ g3.push(m[r3].slice()); }
+    for(var r4=0;r4<N;r4++)for(var c4=0;c4<N;c4++)
+      if(!res[r4][c4]&&maskFn(k3,r4,c4)) g3[r4][c4]^=1;
+    /* format info */
+    var f=fmtBits(ECBITS[lvl],k3);
+    for(var i8=0;i8<15;i8++){
+      var bit=(f>>i8)&1;
+      /* copy 1 */
+      if(i8<6)      g3[i8][8]=bit;
+      else if(i8===6) g3[7][8]=bit;
+      else if(i8===7) g3[8][8]=bit;
+      else if(i8===8) g3[8][7]=bit;
+      else            g3[8][14-i8]=bit;
+      /* copy 2 */
+      if(i8<8) g3[8][N-1-i8]=bit;
+      else     g3[N-15+i8][8]=bit;
+    }
+    g3[N-8][8]=1;
+    if(ver>=7){
+      var vb=verBits(ver);
+      for(var i9=0;i9<18;i9++){
+        var b3=(vb>>i9)&1, rr=Math.floor(i9/3), cc=i9%3;
+        g3[rr][N-11+cc]=b3; g3[N-11+cc][rr]=b3;
+      }
+    }
+    var pen=penalty(g3);
+    if(pen<bestP){bestP=pen;best=g3;bestMask=k3;}
+  }
+  return {size:N,version:ver,level:lvl,mask:bestMask,modules:best};
+}
+return {encode:encode,capacityBytes:capacityBytes};
+})();
+
+
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i);};
+
+var AREA={
+ "85701":"Downtown Tucson","85704":"Casas Adobes","85705":"North Central",
+ "85706":"Airport / South","85710":"East Tucson","85711":"East Central",
+ "85712":"Grant / East Central","85713":"Southwest Barrios","85714":"South Tucson",
+ "85716":"Sam Hughes / Central","85718":"Catalina Foothills","85719":"University District",
+ "85730":"Far East","85735":"Three Points","85737":"Oro Valley",
+ "85741":"Northwest","85742":"Marana / Northwest","85743":"Picture Rocks / West",
+ "85745":"West Tucson","85746":"Southwest","85747":"Southeast","85748":"East",
+ "85749":"Tanque Verde","85750":"Northeast Foothills","85755":"Oro Valley North",
+ "85756":"Valencia / South","85757":"Southwest Ridge"
+};
+/* fixed tiers for the local ZIPs so neighbours in the room see different messages */
+var TIER={
+ "85719":2,"85705":2,"85713":2,"85714":2,"85706":2,"85701":2,"85745":2,
+ "85711":1,"85712":1,"85716":1,"85710":1,"85746":1,"85756":1,"85704":1,"85741":1,
+ "85718":0,"85750":0,"85749":0,"85737":0,"85755":0,"85730":0,"85747":0,"85748":0,
+ "85742":0,"85743":0,"85735":0,"85757":0
+};
+/* symptom profiles, all drawn from Table 1 of Wojcik et al. 2014 */
+var SYMPOOL=[
+ /* 0 = mild, for baseline areas */
+ [["runny or blocked nose","sneezing","sore throat"],
+  ["cough","headache"],
+  ["fatigue","runny or blocked nose","watery eyes"]],
+ /* 1 = mixed, for slightly elevated areas */
+ [["cough","sore throat","runny or blocked nose"],
+  ["fatigue","headache","muscle pain"],
+  ["cough","fatigue","chills"]],
+ /* 2 = febrile, for elevated areas */
+ [["fever","cough","fatigue","sore throat"],
+  ["fever","chills","muscle pain","cough"],
+  ["fever","cough","headache","shortness of breath"],
+  ["fever","sore throat","headache","fatigue"]]
+];
+var LABEL=["Baseline","Slightly elevated","Elevated"];
+var COLOUR=["var(--base)","var(--mod)","var(--elev)"];
+
+function hash(s){var h=2166136261;
+  for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}
+  return Math.abs(h);}
+function pick(h,lo,hi){return lo+(h%(hi-lo+1));}
+
+function build(zip){
+  var h=hash(zip),tier=(zip in TIER)?TIER[zip]:(h%3);
+  var reports=pick(h,tier===2?150:tier===1?90:45, tier===2?340:tier===1?190:120);
+  var pct=[pick(h>>3,2,5),pick(h>>3,6,11),pick(h>>3,13,22)][tier];
+  var chg=[pick(h>>7,-18,6),pick(h>>7,15,55),pick(h>>7,80,210)][tier];
+  var bank=SYMPOOL[tier], syms=bank[(h>>11)%bank.length];
+  return {zip:zip,area:AREA[zip]||null,tier:tier,reports:reports,pct:pct,chg:chg,syms:syms};
+}
+function listed(a){
+  if(a.length===1)return a[0];
+  return a.slice(0,-1).join(", ")+" and "+a[a.length-1];
+}
+function message(d){
+  var where="ZIP code <b>"+d.zip+"</b>";
+  if(d.tier===2) return "In "+where+", participants are reporting influenza-like illness at about "
+    +(1+d.chg/100).toFixed(1)+" times the level recorded four weeks ago. The symptoms reported most often "
+    +"this week are "+listed(d.syms)+". Consider masking in crowded indoor settings, and stay home if you "
+    +"develop symptoms.";
+  if(d.tier===1) return "In "+where+", reporting is modestly above the level recorded four weeks ago. "
+    +"The symptoms reported most often this week are "+listed(d.syms)+". Ordinary precautions are reasonable: "
+    +"wash hands, stay home when unwell.";
+  return "In "+where+", reporting is at or near the level recorded four weeks ago. The symptoms reported "
+    +"most often this week are "+listed(d.syms)+". No additional precautions are indicated on the basis of "
+    +"these reports.";
+}
+function show(d){
+  $("oz").textContent=d.zip;
+  $("oa").textContent=d.area?d.area:"outside the modelled area";
+  var c=$("ochip");
+  c.textContent=LABEL[d.tier].toUpperCase();
+  c.style.background=COLOUR[d.tier];
+  $("omsg").innerHTML=message(d);
+  $("otab").innerHTML=
+    "<tr><td class='k'>Reports received, last 7 days</td><td class='v'>"+d.reports+"</td></tr>"+
+    "<tr><td class='k'>Participants meeting the influenza-like illness definition</td><td class='v'>"+d.pct+"%</td></tr>"+
+    "<tr><td class='k'>Change against four weeks ago</td><td class='v'>"+(d.chg>0?"+":"")+d.chg+"%</td></tr>"+
+    "<tr><td class='k'>Most reported symptoms</td><td class='v'>"+d.syms.join(", ")+"</td></tr>"+
+    "<tr class='flag'><td class='k'>Laboratory-confirmed cases among these figures</td><td class='v'>none</td></tr>";
+  $("entry").style.display="none";
+  $("out").style.display="block";
+  window.scrollTo(0,0);
+}
+function submit(){
+  var v=$("zip").value.replace(/\D/g,"");
+  if(v.length!==5){$("err").textContent="Enter a five-digit ZIP code.";return;}
+  $("err").textContent="";
+  show(build(v));
+}
+$("go").addEventListener("click",submit);
+$("zip").addEventListener("keydown",function(e){if(e.key==="Enter")submit();});
+$("again").addEventListener("click",function(){
+  $("out").style.display="none";$("entry").style.display="block";
+  $("zip").value="";$("zip").focus();window.scrollTo(0,0);});
+
+/* projector mode: #present renders a QR of this page */
+function present(){
+  var url=location.href.split("#")[0];
+  $("purl").textContent=url;
+  var cv=$("pq"),g=cv.getContext("2d");
+  g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);
+  try{
+    var q=QR.encode(url,"M"),n=q.size,quiet=2,tot=n+quiet*2,px=Math.floor(cv.width/tot);
+    var off=Math.floor((cv.width-px*tot)/2);
+    g.fillStyle="#0E1519";
+    for(var r=0;r<n;r++)for(var c=0;c<n;c++)
+      if(q.modules[r][c])g.fillRect(off+(c+quiet)*px,off+(r+quiet)*px,px,px);
+  }catch(e){
+    g.fillStyle="#8C2418";g.font="16px sans-serif";g.textAlign="center";
+    g.fillText("URL too long for a QR code.",cv.width/2,cv.height/2);
+  }
+  $("present").classList.add("on");
+}
+if(location.hash==="#present")present();
+window.addEventListener("hashchange",function(){
+  if(location.hash==="#present")present();else $("present").classList.remove("on");});
+})();
+</script>
+</body>
+</html>
