@@ -111,13 +111,13 @@ footer{padding:18px 16px calc(24px + env(safe-area-inset-bottom));text-align:cen
       <div class="msg" id="omsg"></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="weekcard">
       <div class="cardh">THIS WEEK</div>
       <table id="otab"></table>
     </div>
 
     <div class="notice">
-      <strong>Everything on this page was generated for teaching.</strong>
+      <strong>Everything on this page was generated for class presentation.</strong>
       These are not real data and describe no real outbreak.
     </div>
 
@@ -428,6 +428,18 @@ function message(d){
 function show(d){
   $("oz").textContent=d.zip;
   $("oa").textContent=d.area||"";
+  if(!d.area){
+    $("ochip").style.display="none";
+    $("weekcard").style.display="none";
+    $("omsg").innerHTML="ZIP code <b>"+d.zip+"</b> is not covered by this demonstration, which "
+      +"models Tucson and Pima County only. No message is generated for it.";
+    $("entry").style.display="none";
+    $("out").style.display="block";
+    window.scrollTo(0,0);
+    return;
+  }
+  $("ochip").style.display="";
+  $("weekcard").style.display="";
   var c=$("ochip");
   c.textContent=LABEL[d.tier].toUpperCase();
   c.style.background=COLOUR[d.tier];
