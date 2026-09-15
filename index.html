@@ -346,22 +346,35 @@ return {encode:encode,capacityBytes:capacityBytes};
 var $=function(i){return document.getElementById(i);};
 
 var AREA={
+ /* Tucson — standard delivery ZIPs */
  "85701":"Downtown Tucson","85704":"Casas Adobes","85705":"North Central",
  "85706":"Airport / South","85710":"East Tucson","85711":"East Central",
  "85712":"Grant / East Central","85713":"Southwest Barrios","85714":"South Tucson",
- "85716":"Sam Hughes / Central","85718":"Catalina Foothills","85719":"University District",
- "85730":"Far East","85735":"Three Points","85737":"Oro Valley",
+ "85715":"East / Wilmot","85716":"Sam Hughes / Central","85718":"Catalina Foothills",
+ "85719":"University District","85730":"Far East","85735":"Three Points",
+ "85736":"Southwest / Ryan Field","85737":"Oro Valley","85739":"Catalina / SaddleBrooke",
  "85741":"Northwest","85742":"Marana / Northwest","85743":"Picture Rocks / West",
- "85745":"West Tucson","85746":"Southwest","85747":"Southeast","85748":"East",
- "85749":"Tanque Verde","85750":"Northeast Foothills","85755":"Oro Valley North",
- "85756":"Valencia / South","85757":"Southwest Ridge"
+ "85745":"West Tucson","85746":"Southwest","85747":"Southeast / Rita Ranch",
+ "85748":"East Tucson","85749":"Tanque Verde","85750":"Northeast Foothills",
+ "85755":"Oro Valley North","85756":"Valencia / South","85757":"Southwest Ridge",
+ /* campus and institutional */
+ "85721":"University of Arizona campus","85724":"Banner \u2013 University Medical Center",
+ "85723":"Tucson VA Medical Center","85709":"Pima Community College",
+ "85707":"Davis-Monthan AFB","85708":"Davis-Monthan AFB",
+ /* elsewhere in Pima County */
+ "85614":"Green Valley","85622":"Green Valley West","85629":"Sahuarita",
+ "85641":"Vail","85653":"Marana","85658":"Marana / Dove Mountain",
+ "85634":"Sells","85321":"Ajo","85645":"Amado","85601":"Arivaca"
 };
-/* fixed tiers for the local ZIPs so neighbours in the room see different messages */
+/* fixed levels so neighbouring ZIPs return different messages in the room */
 var TIER={
- "85719":2,"85705":2,"85713":2,"85714":2,"85706":2,"85701":2,"85745":2,
- "85711":1,"85712":1,"85716":1,"85710":1,"85746":1,"85756":1,"85704":1,"85741":1,
- "85718":0,"85750":0,"85749":0,"85737":0,"85755":0,"85730":0,"85747":0,"85748":0,
- "85742":0,"85743":0,"85735":0,"85757":0
+ "85701":2,"85705":2,"85706":2,"85713":2,"85714":2,"85719":2,"85721":2,"85745":2,
+ "85746":2,"85756":2,"85709":2,"85757":1,
+ "85704":1,"85710":1,"85711":1,"85712":1,"85715":1,"85716":1,"85741":1,"85743":1,
+ "85748":1,"85724":1,"85723":1,"85629":1,"85653":1,
+ "85718":0,"85730":0,"85735":0,"85736":0,"85737":0,"85739":0,"85742":0,"85747":0,
+ "85749":0,"85750":0,"85755":0,"85707":0,"85708":0,"85614":0,"85622":0,"85641":0,
+ "85658":0,"85634":0,"85321":0,"85645":0,"85601":0
 };
 /* symptom profiles, all drawn from Table 1 of Wojcik et al. 2014 */
 var SYMPOOL=[
@@ -414,7 +427,7 @@ function message(d){
 }
 function show(d){
   $("oz").textContent=d.zip;
-  $("oa").textContent=d.area?d.area:"outside the modelled area";
+  $("oa").textContent=d.area||"";
   var c=$("ochip");
   c.textContent=LABEL[d.tier].toUpperCase();
   c.style.background=COLOUR[d.tier];
